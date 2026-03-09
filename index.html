@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Budget Tracker</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7aa874">
+
+<style>
+body{
+font-family: "Segoe UI", sans-serif;
+background: linear-gradient(#eef6ee,#dfeedd);
+margin:0;
+display:flex;
+justify-content:center;
+padding:30px;
+}
+
+.app{
+width:380px;
+background:white;
+border-radius:18px;
+padding:22px;
+box-shadow:0 6px 18px rgba(0,0,0,0.12);
+}
+
+.title{
+text-align:center;
+color:#5f7f5a;
+margin-bottom:20px;
+}
+
+.balance-card{
+background:#e7f3e6;
+padding:14px;
+border-radius:12px;
+text-align:center;
+margin-bottom:15px;
+}
+
+.balance-card span{
+font-size:20px;
+font-weight:bold;
+color:#3e6c3a;
+}
+
+.stats{
+display:flex;
+gap:10px;
+margin-bottom:15px;
+}
+
+.stat{
+flex:1;
+background:#f1f8f0;
+padding:10px;
+border-radius:10px;
+text-align:center;
+font-size:14px;
+}
+
+.stat-income{
+color:#3e8e41;
+font-weight:bold;
+}
+
+.stat-expense{
+color:#c0392b;
+font-weight:bold;
+}
+
+.today-box{
+background:#f6fbf6;
+padding:8px;
+border-radius:8px;
+text-align:center;
+margin-bottom:15px;
+font-size:13px;
+}
+
+.form{
+display:flex;
+flex-direction:column;
+gap:8px;
+margin-bottom:15px;
+}
+
+input,select{
+padding:9px;
+border-radius:7px;
+border:1px solid #c9ddc6;
+}
+
+button{
+padding:11px;
+border:none;
+background:#7aa874;
+color:white;
+border-radius:8px;
+font-weight:bold;
+cursor:pointer;
+transition:0.2s;
+}
+
+button:hover{
+background:#5f8f5b;
+}
+
+.list{
+display:flex;
+flex-direction:column;
+gap:8px;
+max-height:260px;
+overflow-y:auto;
+}
+
+.transaction{
+background:#f8fbf7;
+border-left:6px solid;
+padding:10px;
+border-radius:8px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.trans-info{
+display:flex;
+flex-direction:column;
+}
+
+.trans-title{
+font-size:14px;
+}
+
+.trans-date{
+font-size:11px;
+color:gray;
+}
+
+.delete{
+color:#c0392b;
+cursor:pointer;
+font-weight:bold;
+font-size:16px;
+}
+
+.toast{
+position:fixed;
+top:25px;
+left:50%;
+transform:translateX(-50%) translateY(-20px);
+background:#5f8f5b;
+color:white;
+padding:16px 22px;
+border-radius:10px;
+opacity:0;
+transition:0.4s;
+font-weight:bold;
+}
+.toast.show{
+opacity:1;
+transform:translateX(-50%) translateY(0);
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<h2 class="title"> Budget Tracker</h2>
+
+<div class="balance-card">
+Balance<br>
+<span>₱<span id="balance">0</span></span>
+</div>
+
+<div class="stats">
+<div class="stat">
+Income<br>
+<span class="stat-income">₱<span id="income">0</span></span>
+</div>
+<div class="stat">
+Expense<br>
+<span class="stat-expense">₱<span id="expense">0</span></span>
+</div>
+</div>
+
+<div class="today-box">
+Spent Today: ₱<span id="today">0</span>
+</div>
+
+<div class="form">
+<input id="text" placeholder="Description">
+<input id="amount" type="number" placeholder="Amount">
+<select id="type">
+<option value="expense">Expense</option>
+<option value="income">Income</option>
+</select>
+<input id="date" type="date">
+<button onclick="addTransaction()">Add Record</button>
+</div>
+
+<div id="list" class="list"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+
+function save(){
+localStorage.setItem("transactions",JSON.stringify(transactions));
+}
+
+function showToast(msg,color){
+const toast=document.getElementById("toast");
+toast.innerText=msg;
+toast.style.background=color;
+toast.classList.add("show");
+setTimeout(()=>{toast.classList.remove("show");},3000);
+}
+
+function addTransaction(){
+let text=document.getElementById("text").value;
+let amount=document.getElementById("amount").value;
+let type=document.getElementById("type").value;
+let date=document.getElementById("date").value;
+
+if(text==""||amount==""||date==""){
+alert("Please fill all fields");
+return;
+}
+
+let transaction={
+id:Date.now(),
+text:text,
+amount:Number(amount),
+type:type,
+date:date
+};
+
+transactions.push(transaction);
+
+document.getElementById("text").value="";
+document.getElementById("amount").value="";
+document.getElementById("date").value="";
+
+save();
+updateUI();
+
+if(type==="expense"){
+if(Number(amount)>500){
+showToast("GASTADOR KA GID!!","#c0392b");
+}else{
+showToast("HIMALA, WAY KWARTA?","#3e8e41");
+}
+}else{
+showToast("PISAN YARN?","#3e8e41");
+}
+}
+
+function updateUI(){
+let list=document.getElementById("list");
+list.innerHTML="";
+
+let income=0;
+let expense=0;
+let todayTotal=0;
+const today=new Date().toISOString().split("T")[0]; 
+
+transactions.forEach(t=>{
+if(t.type==="income") income+=t.amount;
+else{
+expense+=t.amount;
+if(t.date===today) todayTotal+=t.amount;
+}
+
+let card=document.createElement("div");
+card.className="transaction";
+let borderColor=t.type==="income"?"#3e8e41":"#c0392b";
+card.style.borderColor=borderColor;
+
+card.innerHTML=`
+<div class="trans-info">
+<div class="trans-title">${t.text} - ₱${t.amount}</div>
+<div class="trans-date">${t.date}</div>
+</div>
+<div>
+<span class="delete" onclick="deleteTransaction(${t.id})">✖</span>
+</div>
+`;
+
+list.appendChild(card);
+});
+
+document.getElementById("income").innerText=income;
+document.getElementById("expense").innerText=expense;
+document.getElementById("balance").innerText=income-expense;
+document.getElementById("today").innerText=todayTotal;
+}
+
+function deleteTransaction(id){
+transactions=transactions.filter(t=>t.id!==id);
+save();
+updateUI();
+}
+
+updateUI();
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+navigator.serviceWorker.register('service-worker.js')
+}
+</script>
+
+</body>
+</html>

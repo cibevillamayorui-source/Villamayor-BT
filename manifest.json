@@ -1,0 +1,19 @@
+{
+"name": "Budget Tracker",
+"start_url": "index.html",
+"display": "standalone",
+"background_color": "#eef5ee",
+"theme_color": "#7da87b",
+"icons": [
+{
+"src": "icon-152.png",
+"sizes": "152x152",
+"type": "image/png"
+},
+{
+"src": "icon-192.png",
+"sizes": "192x192",
+"type": "image/png"
+}
+]
+}
